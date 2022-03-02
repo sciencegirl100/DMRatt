@@ -1,0 +1,30 @@
+﻿<Window x:Class="DMRatt.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DMRatt"
+        mc:Ignorable="d"
+        Title="DMRatt" Height="464" Width="512" ResizeMode="NoResize" SizeToContent="WidthAndHeight">
+    <Grid Margin="0,0,10,6">
+        <Button x:Name="OutputSelectionButton" Content="Select Output" HorizontalAlignment="Left" Margin="412,409,0,0" VerticalAlignment="Top" Click="OutputSelectionButton_Click"/>
+        <TextBox x:Name="OutputFileSelection" HorizontalAlignment="Left" Margin="10,410,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="397"/>
+
+        <GroupBox x:Name="groupBox" Header="Filter Options" Margin="10,10,256,37">
+            <Grid>
+                <CheckBox x:Name="OptionIncludeInvalidCallsigns" Content="Include Invalid Callsigns" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox x:Name="groupBox1" Header="Program Options" Margin="251,10,10,103">
+            <Grid>
+                <CheckBox x:Name="OptionSaveOmittedCallsigns" Content="Save Omitted Callsign File" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+            </Grid>
+        </GroupBox>
+        <Button x:Name="RunButton" Content="Run" HorizontalAlignment="Left" Margin="377,382,0,0" VerticalAlignment="Top" Width="115" Click="RunButton_Click" IsEnabled="False"/>
+        <!--Button x:Name="StopButton" Content="Stop" HorizontalAlignment="Left" Margin="251,382,0,0" VerticalAlignment="Top" Width="115" Click="StopButton_Click" IsEnabled="False"/-->
+        <ProgressBar x:Name="StatusBar" HorizontalAlignment="Left" Height="13" Margin="251,344,0,0" VerticalAlignment="Top" Width="241"/>
+        <Label x:Name="CurrentTaskLabel" Content="Not Running" HorizontalAlignment="Left" Margin="246,356,0,0" VerticalAlignment="Top" Width="246"/>
+
+
+    </Grid>
+</Window>
