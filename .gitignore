@@ -13,6 +13,7 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+DMRatt*.exe
 
 # Roslyn cache directories
 *.ide/
@@ -187,3 +188,5 @@ git_stats/*
 StyleCop.Cache
 bin
 obj
+
+LICENSE.txt
