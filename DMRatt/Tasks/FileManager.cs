@@ -62,5 +62,12 @@ namespace DMRatt.Tasks
             OutputWriter.Close();
         }
 
+        public void WriteFile(string content)
+        {
+            OutputWriter = File.CreateText(this.SelectedOutputFile);
+            OutputWriter.Write(content);
+            OutputWriter.Close();
+        }
+
     }
 }

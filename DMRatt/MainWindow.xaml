@@ -10,20 +10,44 @@
         <Button x:Name="OutputSelectionButton" Content="Select Output" HorizontalAlignment="Left" Margin="412,409,0,0" VerticalAlignment="Top" Click="OutputSelectionButton_Click"/>
         <TextBox x:Name="OutputFileSelection" HorizontalAlignment="Left" Margin="10,410,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="397"/>
 
-        <GroupBox x:Name="groupBox" Header="Filter Options" Margin="10,10,256,37">
+        <GroupBox x:Name="groupBox" Header="Filter Options" Margin="10,10,262,238">
             <Grid>
-                <CheckBox x:Name="OptionIncludeInvalidCallsigns" Content="Include Invalid Callsigns" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="9*"/>
+                    <ColumnDefinition Width="5*"/>
+                    <ColumnDefinition Width="98*"/>
+                </Grid.ColumnDefinitions>
+                <CheckBox x:Name="OptionIncludeInvalidCallsigns" Content="Include Invalid Callsigns" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Grid.ColumnSpan="3"/>
             </Grid>
         </GroupBox>
         <GroupBox x:Name="groupBox1" Header="Program Options" Margin="251,10,10,103">
             <Grid>
                 <CheckBox x:Name="OptionSaveOmittedCallsigns" Content="Save Omitted Callsign File" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="OptionGetFreshDMR" Content="Get Fresh DMR Contacts" HorizontalAlignment="Left" Margin="10,31,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="OptionGetFreshFCC" Content="Get Fresh FCC Database" HorizontalAlignment="Left" Margin="10,52,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="OptionGetFreshCanada" Content="Get Fresh Canadian Database" HorizontalAlignment="Left" Margin="10,73,0,0" VerticalAlignment="Top" IsEnabled="False"/>
+                <GroupBox x:Name="groupBox3" Header="Online API Filters" Margin="10,144,10,10">
+                    <ScrollViewer>
+                        <Grid>
+                            <CheckBox x:Name="OptionUseJapanAPI" Content="Check Japanese API" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" IsEnabled="False"/>
+                            <CheckBox  x:Name="OptionUseAPIQRZ" Content="Check QRZ API" IsEnabled="False" Margin="10,21,69,102"/>
+                        </Grid>
+                    </ScrollViewer>
+                </GroupBox>
+                <CheckBox x:Name="OptionPurgeDB" Content="Purge Database" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top"/>
+                <Slider x:Name="ThreadControl" HorizontalAlignment="Left" Margin="56,115,0,0" VerticalAlignment="Top" Width="144" Height="16" ValueChanged="slider_ValueChanged" SmallChange="1" TickPlacement="None" IsSnapToTickEnabled="True"/>
+                <Label x:Name="label" Content="Threads" HorizontalAlignment="Left" Margin="4,110,0,0" VerticalAlignment="Top"/>
+                <Label x:Name="ThreadDisplay" Content="22" HorizontalAlignment="Left" Margin="200,110,0,0" VerticalAlignment="Top" Foreground="DimGray"/>
             </Grid>
         </GroupBox>
-        <Button x:Name="RunButton" Content="Run" HorizontalAlignment="Left" Margin="377,382,0,0" VerticalAlignment="Top" Width="115" Click="RunButton_Click" IsEnabled="False"/>
+        <Button x:Name="RunButton" Content="Run" HorizontalAlignment="Left" Margin="377,377,0,0" VerticalAlignment="Top" Width="115" Click="RunButton_Click"/>
         <!--Button x:Name="StopButton" Content="Stop" HorizontalAlignment="Left" Margin="251,382,0,0" VerticalAlignment="Top" Width="115" Click="StopButton_Click" IsEnabled="False"/-->
-        <ProgressBar x:Name="StatusBar" HorizontalAlignment="Left" Height="13" Margin="251,344,0,0" VerticalAlignment="Top" Width="241"/>
-        <Label x:Name="CurrentTaskLabel" Content="Not Running" HorizontalAlignment="Left" Margin="246,356,0,0" VerticalAlignment="Top" Width="246"/>
+        <ProgressBar x:Name="StatusBar" HorizontalAlignment="Left" Height="13" Margin="251,351,0,0" VerticalAlignment="Top" Width="241"/>
+        <Label x:Name="CurrentTaskLabel" Content="Not Running" HorizontalAlignment="Left" Margin="246,360,0,0" VerticalAlignment="Top" Width="246"/>
+        <GroupBox x:Name="groupBox2" Header="Log" Margin="10,209,262,0" Height="183" VerticalAlignment="Top">
+            <TextBox x:Name="Log" HorizontalAlignment="Left" TextWrapping="Wrap" Width="228" Background="{x:Null}" BorderBrush="{x:Null}" AllowDrop="False" FontFamily="Consolas" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" Height="176" ClipToBounds="True"/>
+        </GroupBox>
+        <Label x:Name="CountLabel" Content="Completed: 0" HorizontalAlignment="Left" Margin="246,375,0,0" VerticalAlignment="Top" Width="126"/>
 
 
     </Grid>

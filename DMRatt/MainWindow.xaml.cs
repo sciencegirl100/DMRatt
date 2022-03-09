@@ -13,11 +13,21 @@ namespace DMRatt
     /// </summary>
     public partial class MainWindow : Window
     {
-
+        private DB Database;
         private FileManager FM = new FileManager();
+        //private FileManager OmitManager = null;
+        //private string OmittedContacts = "Radio-ID,Callsign,First-Name,City,State/Prov,Country" + Environment.NewLine;
+        //private bool SaveOmitted = false;
+        //private bool RemoveExpired = true;
+        //private string CompiledList = "Radio-ID,Callsign,First-Name,City,State/Prov,Country" + Environment.NewLine;
         public MainWindow()
         {
             InitializeComponent();
+            Database = new DB();
+            Database.InitDatabase();
+            ThreadControl.Maximum = Environment.ProcessorCount;
+            ThreadControl.Value = Math.Round(ThreadControl.Maximum / 3);
+
         }
 
         #region "Handlers"
@@ -39,6 +49,7 @@ namespace DMRatt
             if (OutputFileSelection.Text.Length < 1)
             {
                 MessageBox.Show("You need to select an ouput destination first.");
+                // TODO: verify destination is writable
             }
             else
             {
@@ -46,11 +57,11 @@ namespace DMRatt
             }
         }
 
-        // Commented out until background task can be killed
-        //private void StopButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    // Kill background task(s)
-        //}
+        private void slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            ThreadDisplay.Content = ThreadControl.Value;
+        }
+
         #endregion
 
         #region "Threads"
@@ -69,31 +80,16 @@ namespace DMRatt
 
         private async void Process()
         {
-            // Download Latest DMR Contacts
-            SetStatusAsync("Create temporary holding file");
-            string TempFileName = System.IO.Path.GetTempFileName();
-            FileInfo FI = new FileInfo(TempFileName);
-            FI.Attributes = FileAttributes.Temporary;
-            var WC = new WebClient();
-            string FullContactList = "https://www.radioid.net/static/user.csv";
-            string cplusList = "https://www.radioid.net/static/cplus.csv";
-            SetStatusAsync("Download master DMR contacts list");
-            WC.DownloadFile(FullContactList, TempFileName);
-            Console.WriteLine(TempFileName);
             FM.ResetFile();
-            FM.AppendLine("Radio-ID,Callsign,First-Name,City,State/Prov,Country");
-            var LookupClient = new RestClient("https://callook.info/");
-            // Load Contacts into memory
-            var CallsignCount = File.ReadAllLines(TempFileName).Length;
-            await StatusBar.Dispatcher.BeginInvoke(
-                (Action)(() => {
-                    StatusBar.Maximum = CallsignCount;
-                }
-                )
-            );
 
             // Run Options
-            var RemoveExpired = true;
+            Boolean RemoveExpired = false;
+            Boolean SaveOmitted   = false;
+            Boolean FreshFCC      = false;
+            Boolean FreshCA       = false;
+            Boolean FreshDMR      = false;
+            int     ThreadCount   = 2    ;
+            Boolean PurgeDB       = false;
             await OptionIncludeInvalidCallsigns.Dispatcher.BeginInvoke(
                 (Action)(() =>
                 {
@@ -101,7 +97,6 @@ namespace DMRatt
                 }
                 )
             );
-            var SaveOmitted = false;
             await OptionSaveOmittedCallsigns.Dispatcher.BeginInvoke(
                 (Action)(() =>
                 {
@@ -109,91 +104,141 @@ namespace DMRatt
                 }
                 )
             );
-            FileManager OmitManager = null;
-            if (SaveOmitted)
-            {
-                OmitManager = new FileManager();
-                OmitManager.SetOutputFile(FM.GetOutputFile().Substring(0,FM.GetOutputFile().Length-3) + "omitted.csv");
-                OmitManager.ResetFile();
-                OmitManager.AppendLine("Radio-ID,Callsign,First-Name,City,State/Prov,Country");
-            }
-
-            SetStatusAsync("Read list into memory");
-            var CSVReader = new StreamReader(File.OpenRead(TempFileName));
-            Int32 LineCounter = 1;
-            bool ToAppend = false;
-            while (!CSVReader.EndOfStream)
-            {
-                var line = CSVReader.ReadLine();
-                if (line != null && line.Length >= 1)
+            await OptionGetFreshDMR.Dispatcher.BeginInvoke(
+                (Action)(() =>
                 {
-                    // For each data row in the CSV...
-                    if (LineCounter > 1)
-                    {
-                        // Extract Callsign (Column 2)
-                        ToAppend = false;
-                        var elements = line.Split(',');
-                        string callsign = elements[1];
-                        SetStatusAsync("Query data about " + callsign);
-                        // Lookup callsign on Callook
-                        var LookupRequest = new RestRequest(callsign+"/json", Method.Get);
-                        var APIResult = await LookupClient.ExecuteAsync(LookupRequest);
-                        // TODO: Handle HTTP Errors
-                        var CallsignStatus = APIResult.Content.Split(new char[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries);
-                        //Console.WriteLine(LineCounter + "> " + callsign + ":" + CallsignStatus[1]);
-                        if (RemoveExpired)
-                        {
-                            if (!CallsignStatus[1].Contains("INVALID"))
-                            {
-                                // Append to final listing
-                                ToAppend = true;
-                            }
-                            else if (SaveOmitted && OmitManager != null)
-                            {
-                                OmitManager.AppendLine(line);
-                            }
-                        }
-                        else
-                        {
-                            ToAppend = true;
-                        }
-                    }
-                    if (ToAppend)
-                    {
-                        FM.AppendLine(line);
-                    }
+                    FreshDMR = (bool)OptionGetFreshDMR.IsChecked;
                 }
+                )
+            );
+            await OptionGetFreshFCC.Dispatcher.BeginInvoke(
+                (Action)(() =>
+                {
+                    FreshFCC = (bool)OptionGetFreshFCC.IsChecked;
+                }
+                )
+            );
+            await OptionGetFreshCanada.Dispatcher.BeginInvoke(
+                (Action)(() =>
+                {
+                    FreshCA = (bool)OptionGetFreshCanada.IsChecked;
+                }
+                )
+            );
+            await ThreadControl.Dispatcher.BeginInvoke(
+                (Action)(() =>
+                {
+                    ThreadCount = (int)ThreadControl.Value;
+                }
+                )
+            );
+            await OptionPurgeDB.Dispatcher.BeginInvoke(
+                (Action)(() =>
+                {
+                    PurgeDB = (bool)OptionPurgeDB.IsChecked;
+                }
+                )
+            );
+            //if (SaveOmitted)
+            //{
+            //    OmitManager = new FileManager();
+            //    OmitManager.SetOutputFile(FM.GetOutputFile().Substring(0, FM.GetOutputFile().Length - 3) + "omitted.csv");
+            //    OmitManager.ResetFile();
+            //}
 
-                LineCounter++;
-                SetProgressAsync(LineCounter);
+            if (PurgeDB)
+            {
+                Database.Licensees.DeleteAll();
             }
-            SetStatusAsync("Remove temporary master list file");
-            CSVReader.Close();
-            File.Delete(TempFileName);
+
+            Boolean OverrideSkipQueries = Database.Licensees.Count() <= 5;
+            LicenseFetch Fetcher = new LicenseFetch();
+            // Process Contacts
+            if (FreshDMR || OverrideSkipQueries)
+            {
+                SetStatusAsync("Loading DMR Contacts");
+                ResetProgressBar(2);
+                Fetcher.DMR(Database, SetProgressAsync, ThreadCount);
+            }
+
+            // Process FCC Database
+            if (FreshFCC || OverrideSkipQueries)
+            {
+                SetStatusAsync("Loading FCC Licenses");
+                ResetProgressBar(2);
+                
+                Fetcher.FCC(Database, SetProgressAsync, ThreadCount);
+            }
+
+
+            //SetStatusAsync("Loading Canadian Licenses");
+
+
+            // Save File(s)
+            //SetStatusAsync("Saving Files");
+            //FM.WriteFile(CompiledList);
+            //OmitManager.WriteFile(OmittedContacts);
+
+
             // TODO: Windows alert sound
             SetStatusAsync("Complete!");
         }
 
         private async void SetStatusAsync(string msg)
         {
-            await CurrentTaskLabel.Dispatcher.BeginInvoke(
-                (Action)(() => {
-                    CurrentTaskLabel.Content = msg;
-                }
-                )
-            );
+            if (msg != null)
+            {
+                await CurrentTaskLabel.Dispatcher.BeginInvoke(
+                    (Action)(() =>
+                    {
+                        CurrentTaskLabel.Content = msg;
+                    }
+                    )
+                );
+            }
         }
 
         private async void SetProgressAsync(int val)
         {
+            // TODO: Make cleaner interface
             await StatusBar.Dispatcher.BeginInvoke(
                 (Action)(() => {
                     //CurrentTaskLabel.Content = msg;
+                    if (val > StatusBar.Maximum)
+                    {
+                        StatusBar.Maximum = val;
+                    }
+                    else
+                    {
+                        CountLabel.Content = "Completed: " + val.ToString();
+                    }
                     StatusBar.Value = val;
                 }
                 )
             );
         }
+        private async void ResetProgressBar(int val)
+        {
+            await StatusBar.Dispatcher.BeginInvoke(
+                (Action)(() => {
+                    StatusBar.Maximum = val;
+                    StatusBar.Value = val;
+                }
+                )
+            );
+        }
+        private async void AppendLogAsync(string val)
+        {
+            await Log.Dispatcher.BeginInvoke(
+                (Action)(() => {
+                    //CurrentTaskLabel.Content = msg;
+                    Log.Text += val + Environment.NewLine;
+                    Log.ScrollToEnd();
+                }
+                )
+            );
+        }
         #endregion
+
     }
 }
